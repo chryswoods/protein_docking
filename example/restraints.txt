@@ -1,0 +1,7 @@
+## Restraints file
+## Format is
+## atomname0   residuenumber0   atomname1   residuenumber1   R0/angstrom   k/kcal mol-1 angstrom-2
+
+   CA           1                 CA            1             20             500
+   CA           2                 CA            2             20             500
+
