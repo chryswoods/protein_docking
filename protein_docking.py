@@ -8,7 +8,7 @@ except ImportError:
     pass
 
 
-from Sire.Units import angstrom
+from Sire.Units import angstrom, degrees
 
 
 def load_protein(files):
@@ -26,12 +26,7 @@ def load_protein(files):
         return mols[mols.molNums()[0]]
 
     # join all of the molecules into a single molecule
-    print("NEED TO ADD FUNCTIONALITY TO JOIN MOLECULES")
-    raise ProgramError("This doesn't support multi-molecule proteins")
-
-
-def run():
-    print("RUN")
+    return mols
 
 
 def create_system(protein0, protein1, 
@@ -42,8 +37,11 @@ def create_system(protein0, protein1,
 
     from Sire.System import System
     from Sire.MM import InterGroupFF, CLJSoftShiftFunction
-    from Sire.Mol import MGIdx    
+    from Sire.Mol import MGIdx, MoleculeGroup
     from Sire.Maths import Vector
+
+    group0 = MoleculeGroup("protein0")
+    group1 = MoleculeGroup("protein1")
 
     system = System("protein_docking")
 
@@ -55,7 +53,6 @@ def create_system(protein0, protein1,
 
     func = CLJSoftShiftFunction(coulomb_cutoff, lj_cutoff)
     ff.setCLJFunction(func)
-
 
     # now translate the proteins so that they are separated
     # from each other
@@ -76,8 +73,13 @@ def create_system(protein0, protein1,
     ff.add(protein0, MGIdx(0))
     ff.add(protein1, MGIdx(1))
 
+    group0.add(protein0)
+    group1.add(protein1)
+
     # and add this to the system
     system.add(ff)
+    system.add(group0)
+    system.add(group1)
 
     return system
 
@@ -89,8 +91,13 @@ def add_restraints(system, restraints_file):
 
     from Sire.System import System
     from Sire.Units import kcal_per_mol
-    from Sire.Mol import MolIdx, MGIdx, AtomName, ResNum
+    from Sire.Mol import MolIdx, MGIdx, AtomName, ResNum, MGName
     from Sire.MM import RestraintFF, DistanceRestraint
+    from Sire.FF import FFIdx
+    from Sire.CAS import Symbol
+
+    lam_clj = Symbol("lambda_clj")
+    lam_restraint = Symbol("lambda_restraint")
 
     # do everything in a copy of the System
     system = System(system)
@@ -98,8 +105,14 @@ def add_restraints(system, restraints_file):
     # forcefield to hold all of the restraints
     ff = RestraintFF("restraints")
 
+    # Get a handle on the intermolecular forcefield
+    cljff = system.forceFields()[FFIdx(0)]
+
     # symbol that represents the distance between the atoms
     r = DistanceRestraint.r()
+
+    protein0 = system[MGName("protein0")][MolIdx(0)]
+    protein1 = system[MGName("protein1")][MolIdx(0)]
 
     with open(restraints_file, "r") as FILE:
         for line in FILE.readlines():
@@ -127,9 +140,6 @@ def add_restraints(system, restraints_file):
             func = k.value() * (r - R0.value())**2
 
             # find the two atoms
-            protein0 = system[MGIdx(0)][MolIdx(0)].molecule()
-            protein1 = system[MGIdx(1)][MolIdx(0)].molecule()
-
             atom0 = protein0[ResNum(resnum0) + AtomName(atomname0)]
             atom1 = protein1[ResNum(resnum1) + AtomName(atomname1)]
 
@@ -138,6 +148,13 @@ def add_restraints(system, restraints_file):
             ff.add(restraint)
 
     system.add(ff)
+
+    system.setComponent(lam_clj, 1.0)
+    system.setComponent(lam_restraint, 1.0)
+
+    nrg = lam_clj * cljff.components().total() + lam_restraint * ff.components().total()
+
+    system.setComponent(system.totalComponent(), nrg)
 
     return system
 
@@ -152,4 +169,34 @@ def output_coordinates(system, filename):
         os.makedirs(os.path.dirname(filename))
 
     MoleculeParser.save(system, filename)
+
+
+def create_moves(system,
+                 translate_delta=0.1*angstrom,
+                 rotate_delta=5*degrees):
+    """Create the Monte Carlo moves for the passed
+       system, which translates and rotates the two
+       proteins by a maximum of 'translate_delta'
+       and 'rotate_delta' respectively
+    """
+
+    from Sire.Move import RigidBodyMC, WeightedMoves
+    from Sire.Mol import MGName
+
+    protein0 = system[MGName("protein0")]
+    protein1 = system[MGName("protein1")]
+
+    move0 = RigidBodyMC(protein0)
+    move1 = RigidBodyMC(protein1)
+
+    for move in [move0, move1]:
+       move.setMaximumTranslation(translate_delta)
+       move.setMaximumRotation(rotate_delta)
+
+    moves = WeightedMoves()
+    moves.add(move0, 1)
+    moves.add(move1, 1)
+
+    return moves
+
 

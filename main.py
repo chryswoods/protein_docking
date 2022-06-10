@@ -1,6 +1,6 @@
 
 from protein_docking import load_protein, create_system, add_restraints, \
-                            output_coordinates
+                            output_coordinates, create_moves
 
 # Load the first protein - the file(s) should contain a single molecule
 # that contains the parameterised protein. Lots of file formats are supported.
@@ -25,5 +25,11 @@ print(system.energies())
 # Save the initial coordinates to a PDB file
 output_coordinates(system, "output/0000.pdb")
 
-# Now create some 
+# Now create some Monte Carlo moves
+moves = create_moves(system)
 
+for i in range(1, 51):
+    print(i, moves)
+    system = moves.move(system, 100, False)
+    print(system.energy())
+    output_coordinates(system, "output/%04d.pdb" % i)
