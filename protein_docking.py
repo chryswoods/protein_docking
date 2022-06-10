@@ -198,7 +198,14 @@ def create_moves(system,
        move.setMaximumRotation(max_rotate)
        move.setTemperature(temperature)
 
+       # if the protein is composed of multiple molecules,
+       # then ensure that these are all rotated and translated
+       # as one
+       move.setSynchronisedTranslation(True)
+       move.setSynchronisedRotation(True)
+    
     moves = WeightedMoves()
+    moves.setCheckRunningTotal(False)
     moves.add(move0, 1)
     moves.add(move1, 1)
 

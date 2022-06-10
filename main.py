@@ -32,7 +32,7 @@ output_coordinates(system, "output/0000.pdb")
 # (we use a high temperature to force a lot of sampling)
 moves = create_moves(system,
                      max_translate=0*angstrom,
-                     max_rotate=30*degrees,
+                     max_rotate=5*degrees,
                      temperature=50*celsius)
 
 print(system.property("alpha"))
@@ -60,7 +60,7 @@ for i in range(1, 11):
 
 moves = create_moves(system,
                      max_translate=0.5*angstrom,
-                     max_rotate=30*degrees,
+                     max_rotate=5*degrees,
                      temperature=50*celsius)
 
 system.setComponent(lam_clj, 0.5)
@@ -76,16 +76,16 @@ for i in range(11, 21):
 
 # turn down the sampling for a more refined fit?
 moves = create_moves(system,
-                     max_translate=0.25*angstrom,
-                     max_rotate=5*degrees,
+                     max_translate=0.5*angstrom,
+                     max_rotate=1.0*degrees,
                      temperature=35*celsius)
 
 system.setComponent(lam_clj, 1.0)
 system.setProperty("alpha", 0.5)
 system.setProperty("shiftDelta", 2.0)
 
-# Do 20 more cycles of Monte Carlo
-for i in range(21, 41):
+# Do 10 more cycles of Monte Carlo
+for i in range(21, 31):
     print(i, moves)
     system = moves.move(system, 100, False)
     print(system.energy())
@@ -94,8 +94,8 @@ for i in range(21, 41):
 # turn down fully and use a fully hard CLJ interaction
 # for final refinement?
 moves = create_moves(system,
-                     max_translate=0.05*angstrom,
-                     max_rotate=2.5*degrees,
+                     max_translate=0.5*angstrom,
+                     max_rotate=0.25*degrees,
                      temperature=25*celsius)
 
 system.setComponent(lam_clj, 1.0)
@@ -103,7 +103,7 @@ system.setProperty("alpha", 0.0)
 system.setProperty("shiftDelta", 0.0)
 
 # Do 20 more cycles of Monte Carlo
-for i in range(41, 51):
+for i in range(31, 51):
     print(i, moves)
     system = moves.move(system, 100, False)
     print(system.energy())
