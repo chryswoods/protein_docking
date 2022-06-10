@@ -8,7 +8,11 @@ except ImportError:
     pass
 
 
-from Sire.Units import angstrom, degrees
+from Sire.Units import angstrom, degrees, celsius
+from Sire.CAS import Symbol as _Symbol
+
+lam_clj = _Symbol("lambda_clj")
+lam_restraint = _Symbol("lambda_restraint")
 
 
 def load_protein(files):
@@ -81,6 +85,9 @@ def create_system(protein0, protein1,
     system.add(group0)
     system.add(group1)
 
+    system.setProperty("alpha", 0.0)
+    system.setProperty("shiftDelta", 0.0)
+
     return system
 
 
@@ -94,10 +101,6 @@ def add_restraints(system, restraints_file):
     from Sire.Mol import MolIdx, MGIdx, AtomName, ResNum, MGName
     from Sire.MM import RestraintFF, DistanceRestraint
     from Sire.FF import FFIdx
-    from Sire.CAS import Symbol
-
-    lam_clj = Symbol("lambda_clj")
-    lam_restraint = Symbol("lambda_restraint")
 
     # do everything in a copy of the System
     system = System(system)
@@ -172,8 +175,9 @@ def output_coordinates(system, filename):
 
 
 def create_moves(system,
-                 translate_delta=0.1*angstrom,
-                 rotate_delta=5*degrees):
+                 max_translate=0.1*angstrom,
+                 max_rotate=5*degrees,
+                 temperature=25*celsius):
     """Create the Monte Carlo moves for the passed
        system, which translates and rotates the two
        proteins by a maximum of 'translate_delta'
@@ -190,8 +194,9 @@ def create_moves(system,
     move1 = RigidBodyMC(protein1)
 
     for move in [move0, move1]:
-       move.setMaximumTranslation(translate_delta)
-       move.setMaximumRotation(rotate_delta)
+       move.setMaximumTranslation(max_translate)
+       move.setMaximumRotation(max_rotate)
+       move.setTemperature(temperature)
 
     moves = WeightedMoves()
     moves.add(move0, 1)
