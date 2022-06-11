@@ -9,6 +9,7 @@ except ImportError:
 
 
 from Sire.Units import angstrom, degrees, celsius
+from Sire.Base import wrap
 from Sire.CAS import Symbol as _Symbol
 
 lam_clj = _Symbol("lambda_clj")
@@ -85,8 +86,8 @@ def create_system(protein0, protein1,
     system.add(group0)
     system.add(group1)
 
-    system.setProperty("alpha", 0.0)
-    system.setProperty("shiftDelta", 0.0)
+    system.setProperty("alpha", wrap(0.0))
+    system.setProperty("shiftDelta", wrap(0.0))
 
     return system
 

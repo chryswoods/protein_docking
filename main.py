@@ -1,7 +1,8 @@
 
 from protein_docking import load_protein, create_system, add_restraints, \
                             output_coordinates, create_moves, angstrom, \
-                            degrees, celsius, lam_clj, lam_restraint
+                            degrees, celsius, lam_clj, lam_restraint, \
+                            wrap
 
 # Load the first protein - the file(s) should contain a single molecule
 # that contains the parameterised protein. Lots of file formats are supported.
@@ -64,8 +65,8 @@ moves = create_moves(system,
                      temperature=50*celsius)
 
 system.setComponent(lam_clj, 0.5)
-system.setProperty("alpha", 0.5)
-system.setProperty("shiftDelta", 2.0)
+system.setProperty("alpha", wrap(0.5))
+system.setProperty("shiftDelta", wrap(2.0))
 
 # Do 10 more cycles of Monte Carlo
 for i in range(11, 21):
@@ -81,8 +82,8 @@ moves = create_moves(system,
                      temperature=35*celsius)
 
 system.setComponent(lam_clj, 1.0)
-system.setProperty("alpha", 0.5)
-system.setProperty("shiftDelta", 2.0)
+system.setProperty("alpha", wrap(0.5))
+system.setProperty("shiftDelta", wrap(2.0))
 
 # Do 10 more cycles of Monte Carlo
 for i in range(21, 31):
@@ -99,8 +100,8 @@ moves = create_moves(system,
                      temperature=25*celsius)
 
 system.setComponent(lam_clj, 1.0)
-system.setProperty("alpha", 0.0)
-system.setProperty("shiftDelta", 0.0)
+system.setProperty("alpha", wrap(0.0))
+system.setProperty("shiftDelta", wrap(0.0))
 
 # Do 20 more cycles of Monte Carlo
 for i in range(31, 51):
